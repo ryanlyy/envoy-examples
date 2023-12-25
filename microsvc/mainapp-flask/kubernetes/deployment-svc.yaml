@@ -1,37 +1,32 @@
 apiVersion: apps/v1
-
 kind: Deployment
-
 metadata:
   name: mainapp-envoy-sidecar-deployment
   labels:
     app: mainapp-envoy-sidecar
-
 spec:
   replicas: 1
-
   selector:
     matchLabels:
       app: mainapp-envoy-sidecar
-
   template:
     metadata:
       labels:
         app: mainapp-envoy-sidecar
-
     # The imp stuff
     spec:
+      hostNetwork: true
       containers:
       - name: mainapp-envoy-sidecar
-        image: mainapp-envoy-sidecar:latest
-        imagePullPolicy: Never
+        image: localhost/mainapp-envoy-sidecar:1.1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5199
           name: envoy-port
         
       - name: livescores-microsvc
-        image: livescores-microsvc:latest
-        imagePullPolicy: Never
+        image: localhost/livescores-microsvc:1.0
+        imagePullPolicy: IfNotPresent
         env:
         - name: FOOTBALL_SCORES_URL
           value: "http://football-envoy-sidecar-svc:6199/get_football_scores"
@@ -40,20 +35,32 @@ spec:
 
 ---
 apiVersion: v1
-
 kind: Service
-
 metadata:
   name: mainapp-envoy-sidecar-svc
-
 spec:
   type: ClusterIP
-
   selector:
     app: mainapp-envoy-sidecar
-
   ports:
   - name: mainapp-envoy-sidecar-svc-port
     protocol: TCP
     port: 5199
     targetPort: envoy-port
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mainapp-nodeport
+spec:
+  type: NodePort
+  selector:
+    app: mainapp-envoy-sidecar
+  ports:
+  - name: mainapp-envoy-sidecar-node-port
+    protocol: TCP
+    port: 5199
+    targetPort: 5199
+    nodePort: 30007
+

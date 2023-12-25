@@ -1,19 +1,14 @@
 apiVersion: apps/v1
-
 kind: Deployment
-
 metadata:
   name: football-envoy-sidecar-deployment
   labels:
     app: football-envoy-sidecar
-
 spec:
   replicas: 1
-
   selector:
     matchLabels:
       app: football-envoy-sidecar
-
   template:
     metadata:
       labels:
@@ -21,32 +16,27 @@ spec:
 
     # The imp stuff
     spec:
+      hostNetwork: true
       containers:
       - name: football-envoy-sidecar
-        image: football-envoy-sidecar:latest
+        image: localhost/football-envoy-sidecar:1.1
         imagePullPolicy: Never
         ports:
         - containerPort: 6199
           name: envoy-port
-
       - name: footballscores
-        image: footballscores:latest
+        image: localhost/footballscores:1.0
         imagePullPolicy: Never
 
 ---
 apiVersion: v1
-
 kind: Service
-
 metadata:
   name: football-envoy-sidecar-svc
-
 spec:
   type: ClusterIP
-
   selector:
     app: football-envoy-sidecar
-
   ports:
   - name: football-envoy-sidecar-svc-port
     protocol: TCP
